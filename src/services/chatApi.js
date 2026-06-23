@@ -1,19 +1,21 @@
-const BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api'
+const BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api'
 
 export async function fetchChats(email) {
-  const res = await fetch(`${BASE}/chats/${encodeURIComponent(email)}`)
+  const res = await fetch(`${BASE}/chats?email=${encodeURIComponent(email)}`)
   if (!res.ok) throw new Error('Failed to fetch chats')
   return res.json()
 }
 
 export async function fetchChat(email, chatId) {
-  const res = await fetch(`${BASE}/chats/${encodeURIComponent(email)}/${chatId}`)
+  const res = await fetch(`${BASE}/chats/${chatId}?email=${encodeURIComponent(email)}`)
   if (!res.ok) throw new Error('Failed to fetch chat')
   return res.json()
 }
 
 export async function createChat(email, title = 'New chat') {
-  const res = await fetch(`${BASE}/chats/${encodeURIComponent(email)}`, {
+  const res = await fetch(`${BASE}/chats?email=${encodeURIComponent(email)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title }),
@@ -23,7 +25,7 @@ export async function createChat(email, title = 'New chat') {
 }
 
 export async function updateChat(email, chatId, updates) {
-  const res = await fetch(`${BASE}/chats/${encodeURIComponent(email)}/${chatId}`, {
+  const res = await fetch(`${BASE}/chats/${chatId}?email=${encodeURIComponent(email)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
@@ -33,7 +35,7 @@ export async function updateChat(email, chatId, updates) {
 }
 
 export async function deleteChat(email, chatId) {
-  const res = await fetch(`${BASE}/chats/${encodeURIComponent(email)}/${chatId}`, {
+  const res = await fetch(`${BASE}/chats/${chatId}?email=${encodeURIComponent(email)}`, {
     method: 'DELETE',
   })
   if (!res.ok) throw new Error('Failed to delete chat')
@@ -41,7 +43,7 @@ export async function deleteChat(email, chatId) {
 }
 
 export async function appendMessages(email, chatId, messages) {
-  const res = await fetch(`${BASE}/chats/${encodeURIComponent(email)}/${chatId}/messages`, {
+  const res = await fetch(`${BASE}/chats/${chatId}?email=${encodeURIComponent(email)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages }),
