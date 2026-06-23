@@ -1,4 +1,30 @@
-import { connectDB, Chat } from '../_db.js'
+import mongoose from 'mongoose'
+
+const MONGODB_URI = process.env.MONGODB_URI
+
+let cached = global._mongoose ?? (global._mongoose = { conn: null, promise: null })
+
+async function connectDB() {
+  if (cached.conn) return cached.conn
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI, { bufferCommands: false })
+  }
+  cached.conn = await cached.promise
+  return cached.conn
+}
+
+const Chat = mongoose.models.Chat || mongoose.model('Chat', new mongoose.Schema({
+  userEmail: { type: String, required: true, index: true },
+  title: { type: String, default: 'New chat' },
+  starred: { type: Boolean, default: false },
+  messages: [{
+    role: { type: String, enum: ['user', 'assistant'] },
+    content: String,
+    createdAt: { type: Date, default: Date.now },
+  }],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+}))
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Credentials', true)
@@ -12,10 +38,14 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
 
   try {
-    const { chatId, email } = req.query
-    if (!email) return res.status(400).json({ error: 'email required' })
+    if (!process.env.MONGODB_URI) {
+      return res.status(500).json({ error: 'MONGODB_URI not set' })
+    }
 
     await connectDB()
+
+    const { chatId, email } = req.query
+    if (!email) return res.status(400).json({ error: 'email required' })
 
     if (req.method === 'GET') {
       const chat = await Chat.findOne({ _id: chatId, userEmail: email })
@@ -42,7 +72,6 @@ export default async function handler(req, res) {
       return res.json({ success: true })
     }
 
-    // POST — append messages
     if (req.method === 'POST') {
       const { messages } = req.body || {}
       if (!messages?.length) return res.status(400).json({ error: 'messages required' })
@@ -60,7 +89,7 @@ export default async function handler(req, res) {
 
     res.status(405).json({ error: 'Method not allowed' })
   } catch (err) {
-    console.error('[/api/chats/[chatId]]', err)
+    console.error('[/api/chats/[chatId]]', err.message)
     res.status(500).json({ error: err.message })
   }
 }
