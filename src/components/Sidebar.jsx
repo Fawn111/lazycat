@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 
 function ChatItemMenu({ chatId, isStarred, onStar, onRename, onDelete, onClose }) {
   const ref = useRef(null)
-
   useEffect(() => {
     function handleClickOutside(e) {
       if (ref.current && !ref.current.contains(e.target)) onClose()
@@ -40,8 +39,22 @@ function ChatItemMenu({ chatId, isStarred, onStar, onRename, onDelete, onClose }
   )
 }
 
-function ChatItem({ chat, isActive, onSelect, onStar, onRename, onDelete }) {
+function ChatItem({ chat, isActive, onSelect, onStar, onRename, onDelete, searchQuery }) {
   const [menuOpen, setMenuOpen] = useState(false)
+
+  function highlight(text) {
+    if (!searchQuery) return text
+    const idx = text.toLowerCase().indexOf(searchQuery.toLowerCase())
+    if (idx === -1) return text
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark className="bg-yellow-200 rounded px-0.5">{text.slice(idx, idx + searchQuery.length)}</mark>
+        {text.slice(idx + searchQuery.length)}
+      </>
+    )
+  }
+
   return (
     <div className={`group relative flex items-center rounded-lg transition ${isActive ? 'bg-gray-100' : 'hover:bg-gray-50'}`}>
       {chat.starred && (
@@ -49,11 +62,17 @@ function ChatItem({ chat, isActive, onSelect, onStar, onRename, onDelete }) {
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
         </svg>
       )}
-      <button onClick={() => onSelect(chat.id)} className={`flex-1 text-left px-3 py-2.5 text-[13px] truncate transition ${isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'} ${chat.starred ? 'pl-1.5' : ''}`}>
-        {chat.title}
+      <button
+        onClick={() => onSelect(chat.id)}
+        className={`flex-1 text-left px-3 py-2.5 text-[13px] truncate transition ${isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'} ${chat.starred ? 'pl-1.5' : ''}`}
+      >
+        {highlight(chat.title)}
       </button>
       <div className="relative shrink-0">
-        <button onClick={e => { e.stopPropagation(); setMenuOpen(o => !o) }} className="opacity-0 group-hover:opacity-100 p-1.5 mr-1 rounded-md text-gray-400 hover:text-gray-900 hover:bg-gray-200 transition">
+        <button
+          onClick={e => { e.stopPropagation(); setMenuOpen(o => !o) }}
+          className="opacity-0 group-hover:opacity-100 p-1.5 mr-1 rounded-md text-gray-400 hover:text-gray-900 hover:bg-gray-200 transition"
+        >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
             <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
           </svg>
@@ -66,20 +85,19 @@ function ChatItem({ chat, isActive, onSelect, onStar, onRename, onDelete }) {
 
 export default function Sidebar({ user, chats, activeChatId, onNewChat, onSelectChat, onDeleteChat, onStarChat, onRenameChat, open, onClose }) {
   const firstName = user?.displayName?.split(' ')[0] ?? 'there'
-  const starred = chats.filter(c => c.starred)
-  const recent = chats.filter(c => !c.starred)
+  const [search, setSearch] = useState('')
+
+  const filtered = search.trim()
+    ? chats.filter(c => c.title.toLowerCase().includes(search.toLowerCase()))
+    : chats
+
+  const starred = filtered.filter(c => c.starred)
+  const recent = filtered.filter(c => !c.starred)
 
   return (
     <>
-      {/* Mobile backdrop */}
-      {open && (
-        <div
-          className="fixed inset-0 bg-black/30 z-30 md:hidden"
-          onClick={onClose}
-        />
-      )}
+      {open && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={onClose} />}
 
-      {/* Sidebar — overlay on mobile, inline on desktop */}
       <aside className={`
         fixed md:relative inset-y-0 left-0 z-40 md:z-auto
         flex flex-col shrink-0 bg-[#F9F9FA] border-r border-gray-100
@@ -99,7 +117,7 @@ export default function Sidebar({ user, chats, activeChatId, onNewChat, onSelect
               </div>
               <span className="text-[14px] font-semibold text-gray-900">Lazy Chat</span>
             </div>
-            <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition">
+            <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
@@ -107,7 +125,7 @@ export default function Sidebar({ user, chats, activeChatId, onNewChat, onSelect
           </div>
 
           {/* New chat */}
-          <div className="px-3 pt-3 pb-1">
+          <div className="px-3 pt-3 pb-2">
             <button onClick={onNewChat} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-dashed border-gray-200 text-[13px] font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 hover:border-gray-400 transition">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -116,13 +134,40 @@ export default function Sidebar({ user, chats, activeChatId, onNewChat, onSelect
             </button>
           </div>
 
+          {/* Search */}
+          <div className="px-3 pb-2">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 shrink-0">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Search chats…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="flex-1 bg-transparent text-[13px] text-gray-900 placeholder-gray-300 outline-none"
+                style={{ fontSize: '16px' }}
+              />
+              {search && (
+                <button onClick={() => setSearch('')} className="text-gray-300 hover:text-gray-600 transition">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Chat list */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-4">
+          <div className="flex-1 overflow-y-auto px-3 py-1 flex flex-col gap-3">
+            {search && filtered.length === 0 && (
+              <p className="text-[12px] text-gray-300 px-2 py-4 text-center">No chats match "{search}"</p>
+            )}
             {starred.length > 0 && (
               <div>
                 <p className="text-[10px] uppercase tracking-widest px-2 mb-1.5 font-semibold text-gray-300">Starred</p>
                 <div className="flex flex-col gap-0.5">
-                  {starred.map(chat => <ChatItem key={chat.id} chat={chat} isActive={chat.id === activeChatId} onSelect={id => { onSelectChat(id); onClose() }} onStar={onStarChat} onRename={onRenameChat} onDelete={onDeleteChat} />)}
+                  {starred.map(chat => <ChatItem key={chat.id} chat={chat} isActive={chat.id === activeChatId} onSelect={id => { onSelectChat(id); onClose() }} onStar={onStarChat} onRename={onRenameChat} onDelete={onDeleteChat} searchQuery={search} />)}
                 </div>
               </div>
             )}
@@ -130,11 +175,11 @@ export default function Sidebar({ user, chats, activeChatId, onNewChat, onSelect
               <div>
                 <p className="text-[10px] uppercase tracking-widest px-2 mb-1.5 font-semibold text-gray-300">Recent</p>
                 <div className="flex flex-col gap-0.5">
-                  {recent.map(chat => <ChatItem key={chat.id} chat={chat} isActive={chat.id === activeChatId} onSelect={id => { onSelectChat(id); onClose() }} onStar={onStarChat} onRename={onRenameChat} onDelete={onDeleteChat} />)}
+                  {recent.map(chat => <ChatItem key={chat.id} chat={chat} isActive={chat.id === activeChatId} onSelect={id => { onSelectChat(id); onClose() }} onStar={onStarChat} onRename={onRenameChat} onDelete={onDeleteChat} searchQuery={search} />)}
                 </div>
               </div>
             )}
-            {chats.length === 0 && <p className="text-[12px] text-gray-300 px-2">No chats yet. Start one!</p>}
+            {!search && chats.length === 0 && <p className="text-[12px] text-gray-300 px-2">No chats yet. Start one!</p>}
           </div>
 
           {/* User footer */}

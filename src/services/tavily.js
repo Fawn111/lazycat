@@ -27,22 +27,22 @@ export async function webSearch(query) {
 }
 
 export function formatSearchContext(searchData) {
-  const lines = ['[Web Search Results]']
+  const lines = ['CURRENT WEB SEARCH RESULTS (use these to give a detailed, up-to-date answer):']
+  lines.push('')
 
   if (searchData.answer) {
-    lines.push(`Quick answer: ${searchData.answer}`)
+    lines.push(`Summary: ${searchData.answer}`)
     lines.push('')
   }
 
   searchData.results?.forEach((r, i) => {
-    lines.push(`[${i + 1}] ${r.title}`)
-    lines.push(`URL: ${r.url}`)
-    lines.push(r.content)
+    lines.push(`Source ${i + 1}: ${r.title}`)
+    lines.push(`Link: ${r.url}`)
+    lines.push(`Content: ${r.content}`)
     lines.push('')
   })
 
-  lines.push('[End of search results]')
-  lines.push('Use the above search results to answer the user\'s question. Cite sources where relevant.')
+  lines.push('INSTRUCTIONS: Write a detailed, comprehensive answer using the above search results. At the very end, add a "## Sources" section listing the source titles and links. Do not use [1] [2] number citations inline.')
 
   return lines.join('\n')
 }

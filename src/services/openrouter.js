@@ -4,19 +4,15 @@ const MODEL = 'google/gemma-3-12b-it'
 
 const SYSTEM_PROMPT = {
   role: 'system',
-  content: `
-You are Lazy Chat, a helpful AI assistant.
+  content: `You are Lazy Chat, a helpful AI assistant.
 
 Rules:
-- Give simple and direct answers.
-- Keep responses concise.
-- Avoid unnecessary explanations.
-- Use short paragraphs.
+- Give thorough, well-structured answers. Don't cut answers short.
+- Use headings, bullet points, and paragraphs where appropriate.
 - If asked for code, provide complete working code.
 - If you don't know something, say so.
-- Answer naturally like ChatGPT.
-- When web search results are provided, use them to give accurate, up-to-date answers and cite sources.
-`,
+- Answer naturally and in detail like ChatGPT.
+- When web search results are provided, write a comprehensive answer using ALL the search results. At the end of your response, add a "Sources" section listing the URLs you used. Do NOT use [1] [2] [3] style inline citations.`,
 }
 
 export async function sendMessage(messages, onChunk, signal, searchContext = null) {
@@ -49,7 +45,7 @@ export async function sendMessage(messages, onChunk, signal, searchContext = nul
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.2,
-        max_tokens: 600,
+        max_tokens: 2000,
         stream: true,
         messages: [SYSTEM_PROMPT, ...finalMessages],
       }),

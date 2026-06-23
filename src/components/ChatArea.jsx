@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import remarkGfm from 'remark-gfm'
 
 const SUGGESTIONS = [
   { icon: '✍️', label: 'Write a short story', sub: 'Creative fiction, any genre', prompt: 'Write me a short story' },
@@ -8,60 +11,117 @@ const SUGGESTIONS = [
   { icon: '🗺️', label: 'Plan a trip to Tokyo', sub: '3-day itinerary', prompt: 'Plan a 3-day trip to Tokyo' },
 ]
 
-const markdownComponents = {
-  h1: ({ children }) => (
-    <h1 className="text-[22px] font-bold text-gray-900 mt-5 mb-2 pb-2 border-b border-gray-100">{children}</h1>
-  ),
-  h2: ({ children }) => (
-    <h2 className="text-[18px] font-bold text-gray-900 mt-5 mb-2">{children}</h2>
-  ),
-  h3: ({ children }) => (
-    <h3 className="text-[16px] font-bold text-gray-800 mt-4 mb-1.5">{children}</h3>
-  ),
-  strong: ({ children }) => (
-    <strong className="font-semibold text-gray-900">{children}</strong>
-  ),
-  em: ({ children }) => <em className="italic text-gray-600">{children}</em>,
-  p: ({ children }) => (
-    <p className="mb-3.5 last:mb-0 leading-[1.85] text-gray-700 text-[15px]">{children}</p>
-  ),
-  ul: ({ children }) => <ul className="mb-3.5 space-y-2 pl-1">{children}</ul>,
-  ol: ({ children }) => <ol className="mb-3.5 space-y-2 pl-1">{children}</ol>,
-  li: ({ children }) => (
-    <li className="flex gap-3 leading-[1.8] text-gray-700 text-[15px]">
-      <span className="mt-[6px] shrink-0 w-1.5 h-1.5 rounded-full bg-gray-400" />
-      <span>{children}</span>
-    </li>
-  ),
-  code: ({ inline, children }) =>
-    inline ? (
-      <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-gray-200">
-        {children}
-      </code>
-    ) : (
-      <div className="my-4 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-900">
-          <span className="text-[11px] text-gray-400 font-mono uppercase tracking-wider">code</span>
+function CodeBlock({ language, children }) {
+  const [copied, setCopied] = useState(false)
+  const code = String(children).replace(/\n$/, '')
+
+  function handleCopy() {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div className="my-4 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between px-4 py-2 bg-gray-900">
+        <span className="text-[11px] text-gray-400 font-mono uppercase tracking-wider">
+          {language || 'code'}
+        </span>
+        <div className="flex items-center gap-3">
           <div className="flex gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
             <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/70" />
             <span className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
           </div>
+          <button
+            onClick={handleCopy}
+            className="text-[11px] text-gray-400 hover:text-white transition flex items-center gap-1"
+          >
+            {copied ? (
+              <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied</>
+            ) : (
+              <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</>
+            )}
+          </button>
         </div>
-        <pre className="bg-gray-950 text-gray-100 px-4 py-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
-          <code>{children}</code>
-        </pre>
       </div>
-    ),
+      <SyntaxHighlighter
+        language={language || 'text'}
+        style={oneLight}
+        customStyle={{
+          margin: 0,
+          padding: '1rem',
+          background: '#f8f9fa',
+          fontSize: '13px',
+          lineHeight: '1.6',
+        }}
+        showLineNumbers={code.split('\n').length > 4}
+      >
+        {code}
+      </SyntaxHighlighter>
+    </div>
+  )
+}
+
+const markdownComponents = {
+  h1: ({ children }) => (
+    <h1 className="text-[22px] font-bold text-gray-900 mt-6 mb-3 pb-2 border-b border-gray-100">{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-[19px] font-bold text-gray-900 mt-5 mb-2">{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-[16px] font-bold text-gray-800 mt-4 mb-1.5">{children}</h3>
+  ),
+  strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
+  em: ({ children }) => <em className="italic text-gray-600">{children}</em>,
+  p: ({ children }) => (
+    <p className="mb-3.5 last:mb-0 leading-[1.85] text-gray-700 text-[15px]">{children}</p>
+  ),
+  ul: ({ children }) => <ul className="mb-3.5 space-y-1.5 pl-5 list-disc marker:text-gray-400">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-3.5 space-y-1.5 pl-5 list-decimal marker:text-gray-500">{children}</ol>,
+  li: ({ children }) => (
+    <li className="leading-[1.8] text-gray-700 text-[15px] pl-1">{children}</li>
+  ),
+  // Tables
+  table: ({ children }) => (
+    <div className="my-4 overflow-x-auto rounded-xl border border-gray-200">
+      <table className="w-full text-[14px] border-collapse">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-gray-50">{children}</thead>,
+  tbody: ({ children }) => <tbody className="divide-y divide-gray-100">{children}</tbody>,
+  tr: ({ children }) => <tr className="hover:bg-gray-50 transition">{children}</tr>,
+  th: ({ children }) => (
+    <th className="px-4 py-2.5 text-left text-[12px] font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="px-4 py-2.5 text-gray-700">{children}</td>
+  ),
+  // Code
+  code: ({ inline, className, children }) => {
+    const language = className?.replace('language-', '') || ''
+    if (inline) {
+      return (
+        <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-gray-200">
+          {children}
+        </code>
+      )
+    }
+    return <CodeBlock language={language}>{children}</CodeBlock>
+  },
   blockquote: ({ children }) => (
-    <blockquote className="border-l-[3px] border-gray-300 pl-4 py-1 my-3 text-gray-500 italic bg-gray-50 rounded-r-lg">
+    <blockquote className="border-l-4 border-gray-200 pl-4 py-1 my-3 text-gray-500 italic bg-gray-50/80 rounded-r-xl">
       {children}
     </blockquote>
   ),
   hr: () => <hr className="border-gray-100 my-5" />,
   a: ({ href, children }) => (
     <a href={href} target="_blank" rel="noopener noreferrer"
-      className="text-gray-900 font-medium underline underline-offset-2 decoration-gray-300 hover:decoration-gray-900 transition">
+      className="text-blue-600 hover:text-blue-800 underline underline-offset-2 transition">
       {children}
     </a>
   ),
@@ -137,19 +197,22 @@ function Message({ msg, user, onRegenerate, isLast }) {
           ) : (
             <div>
               {msg.content ? (
-                <ReactMarkdown components={markdownComponents}>
+                <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
                   {msg.content}
                 </ReactMarkdown>
               ) : null}
               {msg.streaming && !msg.content && (
-                <div className="flex gap-1.5 py-2 px-1">
-                  <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '120ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '240ms' }} />
+                <div className="flex items-center gap-2 py-1 px-1">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '120ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '240ms' }} />
+                  </div>
+                  <span className="text-[12px] text-gray-300">thinking…</span>
                 </div>
               )}
               {msg.streaming && msg.content && (
-                <span className="inline-block w-1.5 h-[16px] bg-gray-400 rounded-sm ml-0.5 animate-pulse align-middle" />
+                <span className="inline-block w-[2px] h-[18px] bg-gray-700 rounded-full ml-0.5 animate-pulse align-middle" />
               )}
             </div>
           )}

@@ -71,17 +71,16 @@ export default function ChatPage() {
 
   // ── Chat CRUD ───────────────────────────────────────────────────
   async function handleNewChat() {
-    // If current chat is already empty, just focus it instead of creating another
     const currentMsgs = messages[activeChatId] ?? []
     const currentChat = chats.find(c => c._id === activeChatId)
     if (currentChat?.title === 'New chat' && currentMsgs.length === 0) {
-      // Already on a fresh empty chat — do nothing
       return
     }
     const chat = await createChat(email)
     setChats(prev => [chat, ...prev])
     setActiveChatId(chat._id)
     setMessages(prev => ({ ...prev, [chat._id]: [] }))
+    setInputs(prev => ({ ...prev, [chat._id]: '' }))
   }
 
   function handleSelectChat(id) {
@@ -123,7 +122,9 @@ export default function ChatPage() {
   }
 
   function handleInputChange(value) {
-    setInputs(prev => ({ ...prev, [activeChatId]: value }))
+    const id = activeChatId
+    if (!id) return
+    setInputs(prev => ({ ...prev, [id]: value }))
   }
 
   function handleStop() {
