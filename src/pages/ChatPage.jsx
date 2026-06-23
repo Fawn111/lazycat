@@ -245,7 +245,7 @@ export default function ChatPage() {
   }, [loadingChats, chats.length, email])
 
   return (
-    <div className="h-screen flex overflow-hidden bg-white">
+    <div className="flex overflow-hidden bg-white" style={{ height: '100dvh' }}>
 
       <Sidebar
         user={user}

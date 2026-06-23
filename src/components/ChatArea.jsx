@@ -203,38 +203,35 @@ export default function ChatArea({ user, input, onInputChange, onSend, onStop, o
     : null
 
   return (
-    <main className="flex-1 flex flex-col min-h-0 bg-[#f9f9f9]">
+    <main className="flex-1 flex flex-col min-h-0 bg-[#f9f9f9]" style={{ minHeight: 0 }}>
 
       {/* Messages / empty state */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-6 sm:py-8">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-3 sm:px-4 py-6 sm:py-8">
         {isEmpty ? (
-          <div className="flex flex-col items-center justify-center h-full pb-4 sm:pb-6 px-2">
-            <div className="relative mb-6">
+          <div className="flex flex-col items-center justify-center min-h-full pb-4 sm:pb-6 px-2">
+            <div className="relative mb-5 sm:mb-6">
               <div className="absolute inset-0 rounded-full blur-2xl opacity-20 bg-gray-900 scale-[2]" />
-              <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gray-900 flex items-center justify-center shadow-2xl">
-                <span className="text-white text-[16px] sm:text-[18px] font-bold tracking-tight">LC</span>
+              <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gray-900 flex items-center justify-center shadow-2xl">
+                <span className="text-white text-[14px] sm:text-[18px] font-bold tracking-tight">LC</span>
               </div>
             </div>
-            <h1 className="text-[24px] sm:text-[32px] font-bold text-gray-900 tracking-tight mb-1.5 text-center">
+            <h1 className="text-[22px] sm:text-[32px] font-bold text-gray-900 tracking-tight mb-1.5 text-center">
               Hey, {firstName} 👋
             </h1>
-            <p className="text-[14px] sm:text-[15px] text-gray-400 mb-8 sm:mb-10 text-center font-normal">
+            <p className="text-[13px] sm:text-[15px] text-gray-400 mb-6 sm:mb-10 text-center font-normal">
               I'm Lazy Chat — ask me anything.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full max-w-[560px] px-0 sm:px-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-[560px]">
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s.label}
                   onClick={() => onInputChange(s.prompt)}
-                  className="group relative text-left px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-900 hover:shadow-lg transition-all duration-200 overflow-hidden"
+                  className="group relative text-left px-4 py-3 sm:py-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-900 hover:shadow-lg transition-all duration-200 overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gray-900 opacity-0 group-hover:opacity-[0.03] transition-opacity" />
-                  <span className="text-[20px] sm:text-[22px] mb-2 sm:mb-2.5 block">{s.icon}</span>
-                  <span className="block text-[13px] sm:text-[14px] font-semibold text-gray-800 group-hover:text-gray-900 mb-0.5 leading-snug">{s.label}</span>
-                  <span className="block text-[11px] sm:text-[12px] text-gray-400 group-hover:text-gray-500 transition">{s.sub}</span>
-                  <svg className="absolute bottom-3.5 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                  </svg>
+                  <span className="text-[18px] sm:text-[22px] mb-1.5 sm:mb-2.5 block">{s.icon}</span>
+                  <span className="block text-[13px] font-semibold text-gray-800 group-hover:text-gray-900 mb-0.5 leading-snug">{s.label}</span>
+                  <span className="block text-[11px] text-gray-400 transition">{s.sub}</span>
                 </button>
               ))}
             </div>
@@ -249,10 +246,13 @@ export default function ChatArea({ user, input, onInputChange, onSend, onStop, o
         )}
       </div>
 
-      {/* Input bar */}
-      <div className="shrink-0 px-3 sm:px-4 pb-4 sm:pb-5 pt-3 bg-white border-t border-gray-100">
+      {/* Input bar — always visible, safe area aware */}
+      <div
+        className="shrink-0 bg-white border-t border-gray-100 px-3 sm:px-4 pt-2.5 sm:pt-3"
+        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+      >
         <div className="max-w-[760px] mx-auto">
-          <div className="flex items-end gap-2 sm:gap-3 bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm focus-within:border-gray-400 focus-within:shadow-md transition-all">
+          <div className="flex items-end gap-2 bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-2.5 shadow-sm focus-within:border-gray-400 focus-within:shadow-md transition-all">
             <textarea
               rows={1}
               placeholder="Ask me anything…"
@@ -260,28 +260,32 @@ export default function ChatArea({ user, input, onInputChange, onSend, onStop, o
               onChange={e => {
                 onInputChange(e.target.value)
                 e.target.style.height = 'auto'
-                e.target.style.height = Math.min(e.target.scrollHeight, 160) + 'px'
+                e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
               }}
               onKeyDown={handleKeyDown}
               disabled={loading}
-              className="flex-1 bg-transparent text-gray-900 placeholder-gray-300 text-[14px] sm:text-[15px] outline-none resize-none leading-relaxed disabled:opacity-50"
-              style={{ maxHeight: '160px', minHeight: '24px' }}
+              className="flex-1 bg-transparent text-gray-900 placeholder-gray-300 outline-none resize-none leading-relaxed disabled:opacity-50"
+              style={{ maxHeight: '120px', minHeight: '24px', fontSize: '16px' }}
             />
             {loading ? (
-              <button onClick={onStop} className="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center bg-red-500 text-white hover:bg-red-600 transition shadow-sm" title="Stop">
+              <button
+                onClick={onStop}
+                className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-red-500 text-white hover:bg-red-600 transition shadow-sm"
+              >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
               </button>
             ) : (
-              <button disabled={!input.trim()} onClick={onSend} className="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center bg-gray-900 text-white hover:bg-gray-700 transition disabled:opacity-25 disabled:cursor-not-allowed shadow-sm">
+              <button
+                disabled={!input.trim()}
+                onClick={onSend}
+                className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-gray-900 text-white hover:bg-gray-700 transition disabled:opacity-25 disabled:cursor-not-allowed shadow-sm"
+              >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
                 </svg>
               </button>
             )}
           </div>
-          <p className="text-[11px] text-gray-300 text-center mt-2 select-none hidden sm:block">
-            Enter to send · Shift+Enter for new line
-          </p>
         </div>
       </div>
     </main>
