@@ -88,3 +88,48 @@ export async function sendMessage(messages, onChunk, signal) {
     reader.cancel()
   }
 }
+
+export async function generateTitle(messages) {
+  const response = await fetch(
+    'https://openrouter.ai/api/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'Lazy Chat',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.1,
+        max_tokens: 12,
+        stream: false,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Generate a short chat title. Reply ONLY with the title.',
+          },
+          ...messages.slice(-5),
+          {
+            role: 'user',
+            content:
+              'Give this conversation a short title of 3-5 words. Reply ONLY with the title.',
+          },
+        ],
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    return 'New Chat'
+  }
+
+  const data = await response.json()
+
+  return (
+    data?.choices?.[0]?.message?.content?.trim() ||
+    'New Chat'
+  )
+}
