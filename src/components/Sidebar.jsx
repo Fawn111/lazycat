@@ -82,7 +82,7 @@ export default function Sidebar({ user, chats, activeChatId, onNewChat, onSelect
       {/* Sidebar — overlay on mobile, inline on desktop */}
       <aside className={`
         fixed md:relative inset-y-0 left-0 z-40 md:z-auto
-        flex flex-col shrink-0 bg-white border-r border-gray-100
+        flex flex-col shrink-0 bg-[#F9F9FA] border-r border-gray-100
         transition-transform duration-300 ease-in-out
         w-[280px] md:w-[260px]
         ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden md:border-0'}

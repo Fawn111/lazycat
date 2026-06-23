@@ -203,7 +203,7 @@ export default function ChatArea({ user, input, onInputChange, onSend, onStop, o
     : null
 
   return (
-    <main className="flex-1 flex flex-col min-h-0 bg-[#f9f9f9]" style={{ minHeight: 0 }}>
+    <main className="flex-1 flex flex-col min-h-0 bg-white" style={{ minHeight: 0 }}>
 
       {/* Messages / empty state */}
       <div className="flex-1 overflow-y-auto overscroll-contain px-3 sm:px-4 py-6 sm:py-8">
