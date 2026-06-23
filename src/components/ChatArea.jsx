@@ -179,7 +179,7 @@ function Message({ msg, user, onRegenerate, isLast }) {
   )
 }
 
-export default function ChatArea({ user, input, onInputChange, onSend, onStop, onRegenerate, messages, loading }) {
+export default function ChatArea({ user, input, onInputChange, onSend, onStop, onRegenerate, messages, loading, isSearching }) {
   const firstName = user?.displayName?.split(' ')[0] ?? 'there'
   const bottomRef = useRef(null)
 
@@ -252,6 +252,17 @@ export default function ChatArea({ user, input, onInputChange, onSend, onStop, o
         style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
       >
         <div className="max-w-[760px] mx-auto">
+          {/* Web search indicator */}
+          {isSearching && (
+            <div className="flex items-center gap-2 mb-2 px-1">
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+              <span className="text-[12px] text-gray-400">Searching the web…</span>
+            </div>
+          )}
           <div className="flex items-end gap-2 bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-2.5 shadow-sm focus-within:border-gray-400 focus-within:shadow-md transition-all">
             <textarea
               rows={1}

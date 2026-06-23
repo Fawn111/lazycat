@@ -6,6 +6,7 @@ import TopBar from '../components/TopBar'
 import ChatArea from '../components/ChatArea'
 import ProfileModal from '../components/ProfileModal'
 import { sendMessage, generateTitle } from '../services/openrouter'
+import { needsWebSearch, webSearch, formatSearchContext } from '../services/tavily'
 import {
   fetchChats, fetchChat, createChat,
   updateChat, deleteChat, appendMessages,
@@ -24,6 +25,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState({})   // { chatId: [{id, role, content, streaming}] }
   const [inputs, setInputs] = useState({})
   const [loading, setLoading] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
   const [loadingChats, setLoadingChats] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -140,7 +142,7 @@ export default function ChatPage() {
   }
 
   // ── Stream helper — returns final assistant content ─────────────
-  async function runStream(chatId, history, assistantMsgId) {
+  async function runStream(chatId, history, assistantMsgId, searchContext = null) {
     const controller = new AbortController()
     abortRef.current = controller
     setLoading(true)
@@ -155,7 +157,7 @@ export default function ChatPage() {
             m.id === assistantMsgId ? { ...m, content: m.content + chunk } : m
           ),
         }))
-      }, controller.signal)
+      }, controller.signal, searchContext)
     } catch (err) {
       if (err.name !== 'AbortError') {
         const errMsg = `Error: ${err.message}`
@@ -200,9 +202,23 @@ export default function ChatPage() {
     setInputs(prev => ({ ...prev, [chatId]: '' }))
 
     const history = [...prevMsgs, userMsg].map(m => ({ role: m.role, content: m.content }))
-    const assistantContent = await runStream(chatId, history, assistantMsgId)
 
-    // Save both messages to MongoDB using the directly captured content
+    // Web search if needed
+    let searchContext = null
+    if (needsWebSearch(userText)) {
+      setIsSearching(true)
+      try {
+        const searchData = await webSearch(userText)
+        searchContext = formatSearchContext(searchData)
+      } catch {
+        // Search failed silently — continue without it
+      } finally {
+        setIsSearching(false)
+      }
+    }
+
+    const assistantContent = await runStream(chatId, history, assistantMsgId, searchContext)
+
     await appendMessages(email, chatId, [
       { role: 'user', content: userText },
       { role: 'assistant', content: assistantContent },
@@ -278,6 +294,7 @@ export default function ChatPage() {
           onRegenerate={handleRegenerate}
           messages={activeMessages}
           loading={loading}
+          isSearching={isSearching}
         />
       </div>
 

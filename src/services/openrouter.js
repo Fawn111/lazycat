@@ -15,11 +15,25 @@ Rules:
 - If asked for code, provide complete working code.
 - If you don't know something, say so.
 - Answer naturally like ChatGPT.
+- When web search results are provided, use them to give accurate, up-to-date answers and cite sources.
 `,
 }
 
-export async function sendMessage(messages, onChunk, signal) {
+export async function sendMessage(messages, onChunk, signal, searchContext = null) {
   const recentMessages = messages.slice(-10)
+
+  // If we have search results, inject them as a system message before the last user message
+  let finalMessages = [...recentMessages]
+  if (searchContext) {
+    const lastUserIdx = [...finalMessages].reverse().findIndex(m => m.role === 'user')
+    if (lastUserIdx >= 0) {
+      const insertAt = finalMessages.length - 1 - lastUserIdx
+      finalMessages.splice(insertAt, 0, {
+        role: 'system',
+        content: searchContext,
+      })
+    }
+  }
 
   const response = await fetch(
     'https://openrouter.ai/api/v1/chat/completions',
@@ -35,9 +49,9 @@ export async function sendMessage(messages, onChunk, signal) {
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.2,
-        max_tokens: 400,
+        max_tokens: 600,
         stream: true,
-        messages: [SYSTEM_PROMPT, ...recentMessages],
+        messages: [SYSTEM_PROMPT, ...finalMessages],
       }),
     }
   )
